@@ -15,6 +15,8 @@
             font-family: "Microsoft JhengHei", sans-serif;
             overflow: hidden;
         }
+
+        /* 初始按鈕樣式 */
         #giftButton {
             padding: 15px 30px;
             font-size: 20px;
@@ -24,27 +26,66 @@
             border-radius: 50px;
             cursor: pointer;
             box-shadow: 0 4px 15px rgba(255, 77, 109, 0.3);
-            z-index: 9999;
+            z-index: 10000;
             transition: 0.3s;
         }
         #giftButton:hover { transform: scale(1.1); }
+
+        /* 彈出訊息樣式 */
         .message {
             position: absolute;
             padding: 12px 18px;
             background: white;
             border-radius: 12px;
             box-shadow: 2px 4px 15px rgba(0,0,0,0.08);
-            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
             font-size: 16px;
             color: #333;
             white-space: nowrap;
             border: 1px solid #ffecf0;
             pointer-events: none;
+            /* 預設隱藏，由 JS 控制顯示 */
+            opacity: 0;
+            transform: scale(0);
+            transition: opacity 0.3s, transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        @keyframes popIn {
-            0% { transform: scale(0); opacity: 0; }
-            100% { transform: scale(1) rotate(var(--r)); opacity: 1; }
+
+        .message.show {
+            opacity: 1;
+            transform: scale(1) rotate(var(--r));
         }
+
+        /* 結尾彩蛋樣式 */
+        #finalMessage {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.8);
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(255, 77, 109, 0.2);
+            text-align: center;
+            z-index: 20000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 1s ease-in-out;
+            border: 2px solid #ff4d6d;
+            max-width: 80%;
+        }
+
+        #finalMessage.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        #finalMessage h2 {
+            color: #ff4d6d;
+            margin: 0;
+            font-size: 24px;
+            line-height: 1.6;
+        }
+
         .heart {
             position: absolute;
             color: #ff4d6d;
@@ -61,13 +102,19 @@
 
     <button id="giftButton">🎁 打開我的神祕禮物</button>
 
+    <div id="finalMessage">
+        <h2 id="finalText"></h2>
+    </div>
+
     <script>
         // ==========================================
-        // ⚙️ 設定區：在這裡修改數量和秒數
+        // ⚙️ 設定區：在這裡修改數量、速度與結尾文字
         // ==========================================
         const CONFIG = {
-            totalMessages: 30,    // 總共要跳出的訊息數量
-            speedMs: 250,         // 每隔多少毫秒跳出一句 (1000ms = 1秒)
+            totalMessages: 30,      // 總共要跳出的訊息數量
+            speedMs: 300,           // 每隔多少毫秒跳出一句
+            typeSpeed: 50,          // 打字機速度 (毫秒/字)
+            finalText: "\n願我們都能成為想成為的人。" // 結尾彩蛋文字 (\n 代表換行)
         };
 
         const messages = [
@@ -77,17 +124,19 @@
             "不管發生什麼我都在", "今天的你辛苦了", "願你每天都有好夢", 
             "生活雖然平凡，但你很閃耀", "不要忘記微笑喔", "願你被世界溫柔以待", 
             "你是最棒的，不接受反駁", "要把心情調整到快樂頻道", "未來的路我們一起走", 
-            "想哭的時候，記得我這有肩膀", "今天也要對自己好一點", "謝謝今年有妳" 
+            "想哭的時候，記得我這有肩膀", "今天也要對自己好一點"
         ];
         // ==========================================
 
         const btn = document.getElementById('giftButton');
+        const finalBox = document.getElementById('finalMessage');
+        const finalTextEl = document.getElementById('finalText');
         let positions = [];
+        let currentZIndex = 100;
 
-        // 初始化網格位置，確保分佈均勻
         function initGrid() {
-            const cols = 5; // 橫向分5區
-            const rows = 6; // 縱向分6區
+            const cols = 5; 
+            const rows = 6; 
             const cellW = window.innerWidth / cols;
             const cellH = window.innerHeight / rows;
 
@@ -99,8 +148,17 @@
                     });
                 }
             }
-            // 打亂位置順序
             positions.sort(() => Math.random() - 0.5);
+        }
+
+        // 打字機效果函數
+        function typeWriter(element, text, i = 0, callback) {
+            if (i < text.length) {
+                element.innerHTML += text.charAt(i) === '\n' ? '<br>' : text.charAt(i);
+                setTimeout(() => typeWriter(element, text, i + 1, callback), CONFIG.typeSpeed);
+            } else if (callback) {
+                callback();
+            }
         }
 
         btn.addEventListener('click', () => {
@@ -111,6 +169,8 @@
             const interval = setInterval(() => {
                 if (count >= CONFIG.totalMessages || count >= positions.length) {
                     clearInterval(interval);
+                    // 訊息跳完後，延遲一下顯示彩蛋
+                    setTimeout(showFinalSurprise, 1000);
                     return;
                 }
                 createPopUp(positions[count]);
@@ -121,27 +181,46 @@
         function createPopUp(pos) {
             const div = document.createElement('div');
             div.className = 'message';
-            div.innerText = messages[Math.floor(Math.random() * messages.length)];
             
+            // 隨機選一句話
+            const text = messages[Math.floor(Math.random() * messages.length)];
+            
+            // 設置樣式
             const rotate = (Math.random() - 0.5) * 25; 
+            currentZIndex++; // 讓後跳出來的永遠在上面
+            
             div.style.left = pos.x + 'px';
             div.style.top = pos.y + 'px';
+            div.style.zIndex = currentZIndex;
             div.style.setProperty('--r', rotate + 'deg');
             
             const colors = ['#fff0f3', '#f0f4ff', '#f0fff4', '#fff9f0', '#fdf2ff'];
             div.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
             
             document.body.appendChild(div);
+            
+            // 觸發顯示動畫
+            setTimeout(() => div.classList.add('show'), 10);
 
+            // 執行打字機效果
+            typeWriter(div, text);
+
+            // 愛心動畫
             const heart = document.createElement('div');
             heart.className = 'heart';
             heart.innerHTML = '❤️';
             heart.style.left = (pos.x + 40) + 'px';
             heart.style.top = pos.y + 'px';
+            heart.style.zIndex = currentZIndex + 1;
             document.body.appendChild(heart);
             setTimeout(() => heart.remove(), 2000);
+        }
+
+        function showFinalSurprise() {
+            finalBox.classList.add('active');
+            // 結尾彩蛋也使用打字機效果
+            typeWriter(finalTextEl, CONFIG.finalText);
         }
     </script>
 </body>
 </html>
-
