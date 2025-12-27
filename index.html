@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>神秘的禮物</title>
     <style>
+        /* 這裡負責畫面美化 (CSS) */
         body {
             display: flex;
             justify-content: center;
@@ -21,35 +22,39 @@
             background-color: #ff4d6d;
             color: white;
             border: none;
-            border-radius: 10px;
+            border-radius: 50px;
             cursor: pointer;
             box-shadow: 0 4px 15px rgba(255, 77, 109, 0.3);
-            z-index: 100;
+            z-index: 9999;
+            transition: transform 0.2s;
         }
+        #giftButton:active { transform: scale(0.9); }
         .message {
             position: absolute;
-            padding: 10px 20px;
+            padding: 12px 20px;
             background: white;
-            border-radius: 15px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
             font-size: 16px;
             color: #333;
             white-space: nowrap;
+            border: 1px solid #ffecf0;
         }
         @keyframes popIn {
             0% { transform: scale(0); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(1) rotate(var(--r)); opacity: 1; }
         }
         .heart {
             position: absolute;
             color: #ff4d6d;
             font-size: 20px;
             animation: floatUp 2s ease-in forwards;
+            pointer-events: none;
         }
         @keyframes floatUp {
             0% { transform: translateY(0) scale(1); opacity: 1; }
-            100% { transform: translateY(-200px) scale(1.5); opacity: 0; }
+            100% { transform: translateY(-150px) scale(1.5); opacity: 0; }
         }
     </style>
 </head>
@@ -58,6 +63,7 @@
     <button id="giftButton">🎁 點擊打開你的神秘禮物</button>
 
     <script>
+        // 這裡負責動作邏輯 (JavaScript)
         const messages = [
             "你要永遠當個小朋友", "世界很煩，但你要很可愛", "願你所有的努力都有回報", 
             "別給自己太大壓力", "今天也是為你加油的一天", "你是這世界上最獨一無二的", 
@@ -65,57 +71,56 @@
             "不管發生什麼我都在", "今天的你辛苦了", "願你每天都有好夢", 
             "生活雖然平凡，但你很閃耀", "不要忘記微笑喔", "願你被世界溫柔以待", 
             "你是最棒的，不接受反駁", "要把心情調整到快樂頻道", "未來的路我們一起走", 
-            "想哭的時候，記得我這有肩膀", "今天也要對自己好一點", "加油喔!數學小老師"
+            "想哭的時候，記得我這有肩膀", "今天也要對自己好一點"
         ];
 
         const btn = document.getElementById('giftButton');
 
         btn.addEventListener('click', () => {
-            btn.style.display = 'none'; // 點擊後隱藏按鈕
+            btn.style.display = 'none';
             
-            // 每 200 毫秒彈出一個訊息
             let count = 0;
+            const maxMessages = 25; // 總共跳出幾句
+            
             const interval = setInterval(() => {
-                if (count >= 30) { // 彈出 30 個訊息後停止
+                if (count >= maxMessages) {
                     clearInterval(interval);
                     return;
                 }
                 createPopUp();
                 count++;
-            }, 200);
+            }, 250); // 每 0.25 秒跳出一句，分佈更均勻
         });
 
         function createPopUp() {
-            // 建立訊息框
             const div = document.createElement('div');
             div.className = 'message';
             div.innerText = messages[Math.floor(Math.random() * messages.length)];
             
-            // 隨機位置
-            const x = Math.random() * (window.innerWidth - 150);
-            const y = Math.random() * (window.innerHeight - 50);
+            // 優化分佈算法
+            const x = Math.random() * (window.innerWidth - 200) + 20;
+            const y = Math.random() * (window.innerHeight - 100) + 20;
+            const rotate = (Math.random() - 0.5) * 30; // 隨機旋轉角度
             
             div.style.left = x + 'px';
             div.style.top = y + 'px';
+            div.style.setProperty('--r', rotate + 'deg');
             
-            // 隨機背景顏色
-            const colors = ['#fff0f3', '#f0f4ff', '#f0fff4', '#fff9f0'];
+            // 隨機粉嫩色
+            const colors = ['#fff0f3', '#f0f4ff', '#f0fff4', '#fff9f0', '#fdf2ff'];
             div.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
             
             document.body.appendChild(div);
 
-            // 建立飄動愛心
+            // 愛心動畫
             const heart = document.createElement('div');
             heart.className = 'heart';
             heart.innerHTML = '❤️';
             heart.style.left = (x + 50) + 'px';
             heart.style.top = y + 'px';
             document.body.appendChild(heart);
-
-            // 自動移除愛心
             setTimeout(() => heart.remove(), 2000);
         }
     </script>
 </body>
 </html>
-
