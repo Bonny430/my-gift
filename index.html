@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>神秘的禮物</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #ffeef2;
+            font-family: "Microsoft JhengHei", sans-serif;
+            overflow: hidden;
+        }
+        #giftButton {
+            padding: 15px 30px;
+            font-size: 20px;
+            background-color: #ff4d6d;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(255, 77, 109, 0.3);
+            z-index: 100;
+        }
+        .message {
+            position: absolute;
+            padding: 10px 20px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            font-size: 16px;
+            color: #333;
+            white-space: nowrap;
+        }
+        @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .heart {
+            position: absolute;
+            color: #ff4d6d;
+            font-size: 20px;
+            animation: floatUp 2s ease-in forwards;
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            100% { transform: translateY(-200px) scale(1.5); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <button id="giftButton">🎁 點擊打開你的神秘禮物</button>
+
+    <script>
+        const messages = [
+            "學會愛自己", "別熬夜喔", "多喝水", "每天都要元氣滿滿", 
+            "我想你了", "保持好心情", "要相信自己", "夢想成真", 
+            "天冷了多穿點", "你是最棒的", "記得吃水果", "早點休息", "我永遠會幫你", "你不適只有一個人"
+        ];
+
+        const btn = document.getElementById('giftButton');
+
+        btn.addEventListener('click', () => {
+            btn.style.display = 'none'; // 點擊後隱藏按鈕
+            
+            // 每 200 毫秒彈出一個訊息
+            let count = 0;
+            const interval = setInterval(() => {
+                if (count >= 1314) { // 彈出 30 個訊息後停止
+                    clearInterval(interval);
+                    return;
+                }
+                createPopUp();
+                count++;
+            }, 50);
+        });
+
+        function createPopUp() {
+            // 建立訊息框
+            const div = document.createElement('div');
+            div.className = 'message';
+            div.innerText = messages[Math.floor(Math.random() * messages.length)];
+            
+            // 隨機位置
+            const x = Math.random() * (window.innerWidth - 150);
+            const y = Math.random() * (window.innerHeight - 50);
+            
+            div.style.left = x + 'px';
+            div.style.top = y + 'px';
+            
+            // 隨機背景顏色
+            const colors = ['#fff0f3', '#f0f4ff', '#f0fff4', '#fff9f0'];
+            div.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            
+            document.body.appendChild(div);
+
+            // 建立飄動愛心
+            const heart = document.createElement('div');
+            heart.className = 'heart';
+            heart.innerHTML = '❤️';
+            heart.style.left = (x + 50) + 'px';
+            heart.style.top = y + 'px';
+            document.body.appendChild(heart);
+
+            // 自動移除愛心
+            setTimeout(() => heart.remove(), 2000);
+        }
+    </script>
+</body>
+</html>
